@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.km.vendingmachine.client.DeleteOrderClient;
 import com.km.vendingmachine.exception.NotFoundException;
 import com.km.vendingmachine.model.ConfigList;
 import com.km.vendingmachine.model.ProductItems;
@@ -28,10 +29,12 @@ import io.swagger.annotations.ApiOperation;
 public class ProductListController {
 	
 	ProductItemService productItemService;
+	DeleteOrderClient deleteOrderClient;
 	
 	@Autowired
-	public ProductListController(ProductItemService productItemService) {
+	public ProductListController(ProductItemService productItemService, DeleteOrderClient deleteOrderClient) {
 		this.productItemService = productItemService;
+		this.deleteOrderClient = deleteOrderClient;
 	}
 	
 	@GetMapping(value="/all") 
@@ -144,7 +147,7 @@ public class ProductListController {
 	}
 	
 	@DeleteMapping(value="/forceDeleteItem/{id}")
-	@ApiOperation(value="Force Delete a single Item and it also update amount on config",
+	@ApiOperation(value="Force Delete a single Item and it also updatep amount on config",
 		notes="This part Force Delete a single Item and it also update amount on config - deleteItem")
 	public ResponseEntity<?> deleteItem(@PathVariable("id") int id) throws EmptyResultDataAccessException{
 		ProductItems productitem = productItemService.getItem(id);
@@ -152,6 +155,7 @@ public class ProductListController {
 		config.getConfig().setColumns(config.getConfig().getColumns()-1);
 		ProductModel productItems = productItemService.addProductItemList(config);
 		productItemService.deleteItem(id); 
+		deleteOrderClient.deleteCustomerOrder(id);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 }
